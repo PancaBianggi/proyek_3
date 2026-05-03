@@ -585,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() => _selectedNavIndex = index);
                   switch (index) {
                     case 1:
-                      // TODO: Search screen
+                      Navigator.pushNamed(context, '/search');
                       break;
                     case 2:
                       Navigator.pushNamed(context, '/cart');
