@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/dark_background.dart';
 import '../theme/app_colors.dart';
+import '../services/api_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -43,10 +44,16 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Auto navigate setelah 3 detik
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        // Tampilkan status bar kembali saat pindah halaman
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Cek token dulu, baru navigate
+    Future.delayed(const Duration(seconds: 3), () async {
+      final token = await ApiService.getToken();
+
+      // Cek mounted SETELAH await
+      if (!mounted) return;
+
+      if (token != null && token.isNotEmpty) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
         Navigator.pushReplacementNamed(context, '/auth');
       }
     });
@@ -92,10 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.blueDark,
-                              AppColors.blue,
-                            ],
+                            colors: [AppColors.blueDark, AppColors.blue],
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -171,7 +175,9 @@ class _SplashScreenState extends State<SplashScreen>
                         Center(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 7),
+                              horizontal: 18,
+                              vertical: 7,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.white24),
                               borderRadius: BorderRadius.circular(20),

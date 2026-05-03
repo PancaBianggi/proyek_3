@@ -165,8 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(context, '/chatbot');
               }),
               const SizedBox(width: 8),
-              _iconButton(Icons.search, () {}),
-              const SizedBox(width: 8),
               _iconButton(Icons.notifications_none, () {}),
             ],
           ),
@@ -560,11 +558,15 @@ class _HomeScreenState extends State<HomeScreen> {
   // -----------------------------------------------------------
   Widget _buildBottomNavBar() {
     final items = [
-      {'icon': Icons.home_rounded,           'label': 'Home',    'route': '/home'},
-      {'icon': Icons.search,                 'label': 'Search',  'route': ''},
-      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart',    'route': '/cart'},
-      {'icon': Icons.favorite_border,        'label': 'Wishlist','route': '/wishlist'},
-      {'icon': Icons.person_outline,         'label': 'Profile', 'route': ''},
+      {'icon': Icons.home_rounded, 'label': 'Home', 'route': '/home'},
+      {'icon': Icons.search, 'label': 'Search', 'route': ''},
+      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart', 'route': '/cart'},
+      {
+        'icon': Icons.favorite_border,
+        'label': 'Wishlist',
+        'route': '/wishlist',
+      },
+      {'icon': Icons.person_outline, 'label': 'Profile', 'route': ''},
     ];
 
     return Container(
@@ -582,7 +584,12 @@ class _HomeScreenState extends State<HomeScreen> {
               final isSelected = _selectedNavIndex == index;
               return GestureDetector(
                 onTap: () {
-                  setState(() => _selectedNavIndex = index);
+                  if (index == 0) {
+                    // Tetap di home, reset ke index 0
+                    setState(() => _selectedNavIndex = 0);
+                    return;
+                  }
+                  // Untuk halaman lain, navigasi tanpa ubah state
                   switch (index) {
                     case 1:
                       Navigator.pushNamed(context, '/search');

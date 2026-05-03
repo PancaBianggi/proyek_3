@@ -404,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildBottomNavBar() {
     final items = [
       {'icon': Icons.home_rounded,           'label': 'Home',    'route': '/home'},
-      {'icon': Icons.search,                 'label': 'Search',  'route': ''},
+      {'icon': Icons.search,                 'label': 'Search',  'route': '/search'},
       {'icon': Icons.shopping_cart_outlined, 'label': 'Cart',    'route': '/cart'},
       {'icon': Icons.favorite_border,        'label': 'Wishlist','route': '/wishlist'},
       {'icon': Icons.person_outline,         'label': 'Profile', 'route': ''},
