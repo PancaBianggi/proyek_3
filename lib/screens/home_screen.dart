@@ -591,7 +591,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pushNamed(context, '/cart');
                       break;
                     case 3:
-                      // TODO: Wishlist screen
+                      Navigator.pushNamed(context, '/wishlist');
                       break;
                     case 4:
                       Navigator.pushNamed(context, '/profile');
