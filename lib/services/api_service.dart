@@ -185,4 +185,12 @@ class ApiService {
     );
     return jsonDecode(res.body);
   }
+
+  static Future<Map<String, dynamic>> getWishlist() async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/wishlist'),
+      headers: await _authHeaders(),
+    );
+    return jsonDecode(res.body);
+  }
 }
