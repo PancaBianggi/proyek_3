@@ -10,6 +10,7 @@ import 'screens/order_success_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/wishlist_screen.dart';
+import 'screens/chatbot_screen.dart';
 
 void main() {
   runApp(const VHGHApp());
@@ -40,6 +41,7 @@ class VHGHApp extends StatelessWidget {
         '/orders':        (context) => const OrdersScreen(),
         '/profile':       (context) => const ProfileScreen(),
         '/wishlist':      (context) => const WishlistScreen(),
+        '/chatbot':       (context) => const ChatbotScreen(),
       },
     );
   }
