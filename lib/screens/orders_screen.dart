@@ -11,11 +11,15 @@ class OrdersScreen extends StatefulWidget {
 
 class _OrdersScreenState extends State<OrdersScreen> {
   String _selectedFilter = 'Semua';
-  List<dynamic> _orders  = [];
-  bool _isLoading        = true;
+  List<dynamic> _orders = [];
+  bool _isLoading = true;
 
   final List<String> _filters = [
-    'Semua', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'
+    'Semua',
+    'Diproses',
+    'Dikirim',
+    'Selesai',
+    'Dibatalkan',
   ];
 
   @override
@@ -30,7 +34,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       final result = await ApiService.getOrders();
       if (result['status'] == true) {
         setState(() {
-          _orders    = result['orders'] ?? [];
+          _orders = result['orders'] ?? [];
           _isLoading = false;
         });
       }
@@ -45,7 +49,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
       final status = o['status']?.toString().toLowerCase() ?? '';
       switch (_selectedFilter) {
         case 'Diproses':
-          return status == 'pending' || status == 'processing' || status == 'paid';
+          return status == 'pending' ||
+              status == 'processing' ||
+              status == 'paid';
         case 'Dikirim':
           return status == 'shipped';
         case 'Selesai':
@@ -61,8 +67,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   // Pisahkan aktif dan riwayat
   List<dynamic> get _activeOrders => _filteredOrders.where((o) {
     final s = o['status']?.toString().toLowerCase() ?? '';
-    return s == 'pending' || s == 'paid' ||
-           s == 'processing' || s == 'shipped';
+    return s == 'pending' || s == 'paid' || s == 'processing' || s == 'shipped';
   }).toList();
 
   List<dynamic> get _historyOrders => _filteredOrders.where((o) {
@@ -81,14 +86,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.blue))
+                    child: CircularProgressIndicator(color: AppColors.blue),
+                  )
                 : _orders.isEmpty
-                    ? _buildEmpty()
-                    : RefreshIndicator(
-                        onRefresh: _loadOrders,
-                        color: AppColors.blue,
-                        child: _buildOrderList(),
-                      ),
+                ? _buildEmpty()
+                : RefreshIndicator(
+                    onRefresh: _loadOrders,
+                    color: AppColors.blue,
+                    child: _buildOrderList(),
+                  ),
           ),
         ],
       ),
@@ -108,8 +114,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: const Icon(Icons.chevron_left,
-                  color: Colors.white, size: 28),
+              child: const Icon(
+                Icons.chevron_left,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -146,11 +155,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 duration: const Duration(milliseconds: 180),
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 18, vertical: 8),
+                  horizontal: 18,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.blue
-                      : const Color(0xFF12122E),
+                  color: isSelected ? AppColors.blue : const Color(0xFF12122E),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected ? AppColors.blue : Colors.white24,
@@ -182,14 +191,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined,
-              color: Colors.white24, size: 80),
+          Icon(Icons.receipt_long_outlined, color: Colors.white24, size: 80),
           SizedBox(height: 16),
-          Text('Belum ada pesanan',
-              style: TextStyle(color: Colors.white38, fontSize: 16)),
+          Text(
+            'Belum ada pesanan',
+            style: TextStyle(color: Colors.white38, fontSize: 16),
+          ),
           SizedBox(height: 8),
-          Text('Yuk mulai belanja produk VHGH!',
-              style: TextStyle(color: Colors.white24, fontSize: 13)),
+          Text(
+            'Yuk mulai belanja produk VHGH!',
+            style: TextStyle(color: Colors.white24, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -199,7 +211,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   // ORDER LIST
   // -----------------------------------------------------------
   Widget _buildOrderList() {
-    final active  = _activeOrders;
+    final active = _activeOrders;
     final history = _historyOrders;
 
     return ListView(
@@ -227,8 +239,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               padding: const EdgeInsets.all(40),
               child: Text(
                 'Tidak ada pesanan $_selectedFilter',
-                style: const TextStyle(
-                    color: Colors.white38, fontSize: 14),
+                style: const TextStyle(color: Colors.white38, fontSize: 14),
               ),
             ),
           ),
@@ -252,16 +263,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
   // ORDER CARD
   // -----------------------------------------------------------
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    final items  = order['items'] as List? ?? [];
+    final items = order['items'] as List? ?? [];
     final status = order['status']?.toString() ?? 'pending';
-    final kode   = order['kode_order']?.toString() ?? '-';
-    final tanggal= order['created_at']?.toString() ?? '-';
-    final kurir  = order['kurir']?.toString() ?? '-';
-    final total  = double.tryParse(order['total_harga'].toString()) ?? 0;
+    final kode = order['kode_order']?.toString() ?? '-';
+    final tanggal = order['created_at']?.toString() ?? '-';
+    final kurir = order['kurir']?.toString() ?? '-';
+    final total = double.tryParse(order['total_harga'].toString()) ?? 0;
 
     return GestureDetector(
       onTap: () {
-        // TODO: Navigate ke detail pesanan
+        Navigator.pushNamed(context, '/order-detail', arguments: order);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -293,7 +304,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         Text(
                           '$tanggal · $kurir',
                           style: const TextStyle(
-                              color: Colors.white38, fontSize: 11),
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -314,7 +327,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildOrderItemRow(Map<String, dynamic> item, double total) {
-    final name   = item['name']?.toString() ?? '-';
+    final name = item['name']?.toString() ?? '-';
     final ukuran = item['ukuran']?.toString() ?? '-';
     final jumlah = item['jumlah']?.toString() ?? '1';
     final gambar = item['gambar']?.toString();
@@ -325,7 +338,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         children: [
           // Gambar produk
           Container(
-            width: 44, height: 44,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: AppColors.blue.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
@@ -333,15 +347,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
             child: gambar != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(gambar,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
-                            Icons.checkroom,
-                            color: Colors.white30,
-                            size: 22)),
+                    child: Image.network(
+                      gambar,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.checkroom,
+                        color: Colors.white30,
+                        size: 22,
+                      ),
+                    ),
                   )
-                : const Icon(Icons.checkroom,
-                    color: Colors.white30, size: 22),
+                : const Icon(Icons.checkroom, color: Colors.white30, size: 22),
           ),
           const SizedBox(width: 12),
 
@@ -353,17 +369,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text(
                   name,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600),
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Ukuran $ukuran · x$jumlah',
-                  style: const TextStyle(
-                      color: Colors.white54, fontSize: 11),
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
               ],
             ),
@@ -373,9 +389,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
           Text(
             'Rp ${_formatPrice(total.toInt())}',
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.bold),
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -394,33 +411,33 @@ class _OrdersScreenState extends State<OrdersScreen> {
       case 'pending':
         color = Colors.orange;
         label = 'Diproses';
-        icon  = Icons.circle;
+        icon = Icons.circle;
         break;
       case 'paid':
       case 'processing':
         color = Colors.orange;
         label = 'Diproses';
-        icon  = Icons.circle;
+        icon = Icons.circle;
         break;
       case 'shipped':
         color = AppColors.blue;
         label = 'Dikirim';
-        icon  = Icons.circle;
+        icon = Icons.circle;
         break;
       case 'delivered':
         color = AppColors.green;
         label = 'Selesai';
-        icon  = Icons.circle;
+        icon = Icons.circle;
         break;
       case 'cancelled':
         color = Colors.red;
         label = 'Dibatalkan';
-        icon  = Icons.circle;
+        icon = Icons.circle;
         break;
       default:
         color = Colors.grey;
         label = 'Pending';
-        icon  = Icons.circle;
+        icon = Icons.circle;
     }
 
     return Container(
@@ -453,11 +470,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
   // -----------------------------------------------------------
   Widget _buildBottomNavBar() {
     final items = [
-      {'icon': Icons.home_rounded,           'label': 'Home',    'route': '/home'},
-      {'icon': Icons.search,                 'label': 'Search',  'route': ''},
-      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart',    'route': '/cart'},
-      {'icon': Icons.favorite_border,        'label': 'Wishlist','route': ''},
-      {'icon': Icons.person_outline,         'label': 'Profile', 'route': '/profile'},
+      {'icon': Icons.home_rounded, 'label': 'Home', 'route': '/home'},
+      {'icon': Icons.search, 'label': 'Search', 'route': ''},
+      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart', 'route': '/cart'},
+      {'icon': Icons.favorite_border, 'label': 'Wishlist', 'route': ''},
+      {'icon': Icons.person_outline, 'label': 'Profile', 'route': '/profile'},
     ];
 
     return Container(
