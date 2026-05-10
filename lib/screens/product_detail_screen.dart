@@ -165,7 +165,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: widget.product.gambar != null
               ? Image.network(
                   widget.product.gambar!,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Center(
                     child: Icon(
                       Icons.checkroom,

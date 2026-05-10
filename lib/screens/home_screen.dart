@@ -27,17 +27,17 @@ class Product {
     this.isWishlisted = false,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'],
-      name: json['name'],
-      harga: double.parse(json['harga'].toString()),
-      kategori: json['kategori'],
-      gambar: json['gambar'],
-      deskripsi: json['deskripsi'],
-      stok: json['stok'] ?? 0,
-    );
-  }
+factory Product.fromJson(Map<String, dynamic> json) {
+  return Product(
+    id: json['id'],
+    name: json['name'],
+    harga: double.parse(json['harga'].toString()),
+    kategori: json['kategori'],
+    gambar: json['gambar'], 
+    deskripsi: json['deskripsi'],
+    stok: json['stok'] ?? 0,
+  );
+}
 }
 
 // =============================================================
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   List<Product> _products = [];
 
-  final List<String> _categories = ['Semua', 'T-Shirt', 'Jacket', 'Pants'];
+  final List<String> _categories = ['Semua', 'T-Shirt', 'Jacket', 'Pants', 'hilal'];
 
   @override
   void initState() {

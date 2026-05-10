@@ -1,16 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
+import '../services/api_service.dart';
 
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({super.key});
 
+  @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool _isCancelling = false;
+
+  // -----------------------------------------------------------
+  // CANCEL ORDER
+  // -----------------------------------------------------------
+  Future<void> _cancelOrder(int orderId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF12122E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Colors.white10),
+        ),
+        title: const Text(
+          'Batalkan Pesanan?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Pesanan yang dibatalkan tidak bisa dikembalikan.',
+          style: TextStyle(color: Colors.white60),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Tidak', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Ya, Batalkan',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isCancelling = true);
+
+    try {
+      final result = await ApiService.cancelOrder(orderId);
+      if (!mounted) return;
+
+      if (result['status'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pesanan berhasil dibatalkan'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal membatalkan pesanan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terjadi kesalahan, coba lagi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+
+    if (mounted) setState(() => _isCancelling = false);
+  }
+
+  // -----------------------------------------------------------
+  // BUILD
+  // -----------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     final order = ModalRoute.of(context)?.settings.arguments
             as Map<String, dynamic>? ??
         {};
 
+    final orderId   = order['id'] as int? ?? 0;
     final kodeOrder = order['kode_order']?.toString() ?? '-';
     final status    = order['status']?.toString() ?? 'pending';
     final total     = double.tryParse(order['total_harga'].toString()) ?? 0;
@@ -44,13 +130,15 @@ class OrderDetailScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildBottomBar(context, status),
+          _buildBottomBar(context, status, orderId),
         ],
       ),
     );
   }
 
+  // -----------------------------------------------------------
   // APP BAR
+  // -----------------------------------------------------------
   Widget _buildAppBar(BuildContext context, String kodeOrder) {
     return SafeArea(
       child: Padding(
@@ -70,11 +158,13 @@ class OrderDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Detail Pesanan',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+            const Text(
+              'Detail Pesanan',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
+            ),
             const Spacer(),
             GestureDetector(
               onTap: () {
@@ -88,8 +178,7 @@ class OrderDetailScreen extends StatelessWidget {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12122E),
                   borderRadius: BorderRadius.circular(10),
@@ -97,14 +186,15 @@ class OrderDetailScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Text('#$kodeOrder',
-                        style: const TextStyle(
-                            color: AppColors.blue,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      '#$kodeOrder',
+                      style: const TextStyle(
+                          color: AppColors.blue,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.copy,
-                        color: Colors.white38, size: 13),
+                    const Icon(Icons.copy, color: Colors.white38, size: 13),
                   ],
                 ),
               ),
@@ -115,7 +205,9 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // STATUS CARD
+  // -----------------------------------------------------------
   Widget _buildStatusCard(String status, String tanggal) {
     final info = _statusInfo(status);
     return Container(
@@ -143,31 +235,33 @@ class OrderDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(info['label'] as String,
-                    style: TextStyle(
-                        color: info['color'] as Color,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  info['label'] as String,
+                  style: TextStyle(
+                      color: info['color'] as Color,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 3),
-                Text(info['desc'] as String,
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 12)),
+                Text(
+                  info['desc'] as String,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
               ],
             ),
           ),
           Text(tanggal,
-              style: const TextStyle(
-                  color: Colors.white38, fontSize: 10)),
+              style: const TextStyle(color: Colors.white38, fontSize: 10)),
         ],
       ),
     );
   }
 
+  // -----------------------------------------------------------
   // TRACKING
+  // -----------------------------------------------------------
   Widget _buildTracking(String status) {
-    final steps = [
-      'Diterima', 'Diproses', 'Dikirim', 'Di Jalan', 'Selesai'
-    ];
+    final steps = ['Diterima', 'Diproses', 'Dikirim', 'Di Jalan', 'Selesai'];
     final statusMap = {
       'pending': 0, 'paid': 1, 'processing': 1,
       'shipped': 2, 'delivered': 4,
@@ -186,17 +280,17 @@ class OrderDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Progress Pesanan',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold)),
+          const Text(
+            'Progress Pesanan',
+            style: TextStyle(
+                color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           Row(
             children: List.generate(steps.length, (i) {
-              final done    = i <= current && current >= 0;
-              final isCur   = i == current && current >= 0;
-              final isLast  = i == steps.length - 1;
+              final done   = i <= current && current >= 0;
+              final isCur  = i == current && current >= 0;
+              final isLast = i == steps.length - 1;
               return Expanded(
                 child: Row(
                   children: [
@@ -211,32 +305,27 @@ class OrderDetailScreen extends StatelessWidget {
                                   ? AppColors.green
                                   : const Color(0xFF1a1a3e),
                               border: Border.all(
-                                color: done
-                                    ? AppColors.green
-                                    : Colors.white24,
+                                color: done ? AppColors.green : Colors.white24,
                                 width: isCur ? 2 : 1,
                               ),
                             ),
                             child: Icon(
                               done ? Icons.check : Icons.circle,
-                              color: done
-                                  ? Colors.white
-                                  : Colors.white24,
+                              color: done ? Colors.white : Colors.white24,
                               size: done ? 14 : 7,
                             ),
                           ),
                           const SizedBox(height: 5),
-                          Text(steps[i],
-                              style: TextStyle(
-                                color: done
-                                    ? Colors.white
-                                    : Colors.white38,
-                                fontSize: 8,
-                                fontWeight: isCur
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                              textAlign: TextAlign.center),
+                          Text(
+                            steps[i],
+                            style: TextStyle(
+                              color: done ? Colors.white : Colors.white38,
+                              fontSize: 8,
+                              fontWeight:
+                                  isCur ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     ),
@@ -245,9 +334,7 @@ class OrderDetailScreen extends StatelessWidget {
                         child: Container(
                           height: 2,
                           margin: const EdgeInsets.only(bottom: 20),
-                          color: i < current
-                              ? AppColors.green
-                              : Colors.white12,
+                          color: i < current ? AppColors.green : Colors.white12,
                         ),
                       ),
                   ],
@@ -260,7 +347,9 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // SHIPPING INFO
+  // -----------------------------------------------------------
   Widget _buildShippingInfo(String alamat, String kurir) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -293,12 +382,10 @@ class OrderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      color: Colors.white54, fontSize: 11)),
+                  style: const TextStyle(color: Colors.white54, fontSize: 11)),
               const SizedBox(height: 2),
               Text(value,
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 13)),
+                  style: const TextStyle(color: Colors.white, fontSize: 13)),
             ],
           ),
         ),
@@ -306,7 +393,9 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // PRODUCT LIST
+  // -----------------------------------------------------------
   Widget _buildProductList(List items) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -321,8 +410,8 @@ class OrderDetailScreen extends StatelessWidget {
           _sectionTitle('Produk (${items.length})'),
           const SizedBox(height: 14),
           ...items.asMap().entries.map((e) {
-            final i    = e.key;
-            final item = e.value as Map<String, dynamic>;
+            final i      = e.key;
+            final item   = e.value as Map<String, dynamic>;
             final isLast = i == items.length - 1;
             return Column(
               children: [
@@ -339,11 +428,14 @@ class OrderDetailScreen extends StatelessWidget {
                       child: item['gambar'] != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.network(item['gambar'],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.checkroom,
-                                          color: Colors.white30, size: 26)),
+                              child: Image.network(
+                                item['gambar'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.checkroom,
+                                    color: Colors.white30,
+                                    size: 26),
+                              ),
                             )
                           : const Icon(Icons.checkroom,
                               color: Colors.white30, size: 26),
@@ -355,13 +447,15 @@ class OrderDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['name']?.toString() ?? '-',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            item['name']?.toString() ?? '-',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           const SizedBox(height: 6),
                           Row(
                             children: [
@@ -372,16 +466,18 @@ class OrderDetailScreen extends StatelessWidget {
                                   color: AppColors.blue.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: Text('Size ${item['ukuran']}',
-                                    style: const TextStyle(
-                                        color: AppColors.blue,
-                                        fontSize: 10)),
+                                child: Text(
+                                  'Size ${item['ukuran']}',
+                                  style: const TextStyle(
+                                      color: AppColors.blue, fontSize: 10),
+                                ),
                               ),
                               const SizedBox(width: 6),
-                              Text('x${item['jumlah']}',
-                                  style: const TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 12)),
+                              Text(
+                                'x${item['jumlah']}',
+                                style: const TextStyle(
+                                    color: Colors.white54, fontSize: 12),
+                              ),
                             ],
                           ),
                         ],
@@ -411,7 +507,9 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // PAYMENT SUMMARY
+  // -----------------------------------------------------------
   Widget _buildPaymentSummary(double total, String metode, String kurir) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -427,8 +525,7 @@ class OrderDetailScreen extends StatelessWidget {
           const SizedBox(height: 14),
           _sumRow('Subtotal', 'Rp ${_fmt(total.toInt())}'),
           const SizedBox(height: 8),
-          _sumRow('Ongkir ($kurir)', 'Gratis',
-              valueColor: AppColors.green),
+          _sumRow('Ongkir ($kurir)', 'Gratis', valueColor: AppColors.green),
           const SizedBox(height: 8),
           _sumRow('Metode Bayar', metode),
           const Divider(color: Colors.white10, height: 20),
@@ -458,8 +555,10 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // BOTTOM BAR
-  Widget _buildBottomBar(BuildContext context, String status) {
+  // -----------------------------------------------------------
+  Widget _buildBottomBar(BuildContext context, String status, int orderId) {
     final showBeli   = status == 'delivered';
     final showCancel = status == 'pending' || status == 'processing';
     if (!showBeli && !showCancel) return const SizedBox();
@@ -488,10 +587,11 @@ class OrderDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Center(
-                    child: Text('Beli Lagi',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Beli Lagi',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
@@ -499,20 +599,27 @@ class OrderDetailScreen extends StatelessWidget {
           if (showCancel)
             Expanded(
               child: GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: _isCancelling ? null : () => _cancelOrder(orderId),
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                        color: Colors.red.withOpacity(0.4)),
+                    border: Border.all(color: Colors.red.withOpacity(0.4)),
                   ),
-                  child: const Center(
-                    child: Text('Batalkan Pesanan',
-                        style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold)),
+                  child: Center(
+                    child: _isCancelling
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.red, strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Batalkan Pesanan',
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ),
@@ -522,7 +629,9 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // -----------------------------------------------------------
   // HELPERS
+  // -----------------------------------------------------------
   Widget _sectionTitle(String title) {
     return Row(
       children: [
@@ -545,18 +654,48 @@ class OrderDetailScreen extends StatelessWidget {
   Map<String, dynamic> _statusInfo(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return {'label': 'Menunggu Konfirmasi', 'desc': 'Pesanan sedang menunggu konfirmasi toko', 'icon': Icons.schedule, 'color': Colors.orange};
+        return {
+          'label': 'Menunggu Konfirmasi',
+          'desc': 'Pesanan sedang menunggu konfirmasi toko',
+          'icon': Icons.schedule,
+          'color': Colors.orange,
+        };
       case 'paid':
       case 'processing':
-        return {'label': 'Sedang Diproses', 'desc': 'Pesanan sedang dipersiapkan', 'icon': Icons.bolt, 'color': Colors.orange};
+        return {
+          'label': 'Sedang Diproses',
+          'desc': 'Pesanan sedang dipersiapkan',
+          'icon': Icons.bolt,
+          'color': Colors.orange,
+        };
       case 'shipped':
-        return {'label': 'Dalam Pengiriman', 'desc': 'Pesanan sedang dalam perjalanan', 'icon': Icons.local_shipping_outlined, 'color': AppColors.blue};
+        return {
+          'label': 'Dalam Pengiriman',
+          'desc': 'Pesanan sedang dalam perjalanan',
+          'icon': Icons.local_shipping_outlined,
+          'color': AppColors.blue,
+        };
       case 'delivered':
-        return {'label': 'Pesanan Selesai', 'desc': 'Pesanan telah diterima', 'icon': Icons.check_circle_outline, 'color': AppColors.green};
+        return {
+          'label': 'Pesanan Selesai',
+          'desc': 'Pesanan telah diterima',
+          'icon': Icons.check_circle_outline,
+          'color': AppColors.green,
+        };
       case 'cancelled':
-        return {'label': 'Pesanan Dibatalkan', 'desc': 'Pesanan telah dibatalkan', 'icon': Icons.cancel_outlined, 'color': Colors.red};
+        return {
+          'label': 'Pesanan Dibatalkan',
+          'desc': 'Pesanan telah dibatalkan',
+          'icon': Icons.cancel_outlined,
+          'color': Colors.red,
+        };
       default:
-        return {'label': 'Pending', 'desc': 'Menunggu konfirmasi', 'icon': Icons.schedule, 'color': Colors.grey};
+        return {
+          'label': 'Pending',
+          'desc': 'Menunggu konfirmasi',
+          'icon': Icons.schedule,
+          'color': Colors.grey,
+        };
     }
   }
 

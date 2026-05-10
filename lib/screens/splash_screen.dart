@@ -12,18 +12,20 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin { // ← ubah jadi TickerProviderStateMixin
   late AnimationController _controller;
+  late AnimationController _loadingController; // ← tambah ini
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
+  late Animation<double> _loadingAnim; // ← tambah ini
 
   @override
   void initState() {
     super.initState();
 
-    // Fullscreen: sembunyikan status bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+    // Controller untuk fade & scale (1.4 detik)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -41,16 +43,25 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _controller.forward();
+    // Controller loading bar (3 detik, sama dengan delay navigate)
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
 
-    // Auto navigate setelah 3 detik
-    // Cek token dulu, baru navigate
+    _loadingAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _loadingController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _controller.forward();
+    _loadingController.forward(); // ← jalankan loading bar
+
     Future.delayed(const Duration(seconds: 3), () async {
       final token = await ApiService.getToken();
-
-      // Cek mounted SETELAH await
       if (!mounted) return;
-
       if (token != null && token.isNotEmpty) {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
@@ -62,16 +73,15 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _loadingController.dispose(); // ← dispose juga
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ambil ukuran layar penuh
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      // Penting: backgroundColor sama dengan gradient agar tidak ada celah putih
       backgroundColor: AppColors.bgDark,
       body: DarkBackground(
         child: FadeTransition(
@@ -83,7 +93,6 @@ class _SplashScreenState extends State<SplashScreen>
               height: size.height,
               child: Column(
                 children: [
-                  // ── LOGO VG (pojok kiri atas, beri padding top) ──
                   Padding(
                     padding: EdgeInsets.only(
                       top: MediaQuery.of(context).padding.top + 40,
@@ -124,14 +133,12 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                  // ── TENGAH: Brand name ──
                   const Spacer(),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 36),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // VHGH dengan huruf G berwarna biru
                         Center(
                           child: RichText(
                             text: const TextSpan(
@@ -141,24 +148,14 @@ class _SplashScreenState extends State<SplashScreen>
                                 letterSpacing: 10,
                               ),
                               children: [
-                                TextSpan(
-                                  text: 'VH',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                TextSpan(
-                                  text: 'G',
-                                  style: TextStyle(color: AppColors.blue),
-                                ),
-                                TextSpan(
-                                  text: 'H',
-                                  style: TextStyle(color: Colors.white),
-                                ),
+                                TextSpan(text: 'VH', style: TextStyle(color: Colors.white)),
+                                TextSpan(text: 'G', style: TextStyle(color: AppColors.blue)),
+                                TextSpan(text: 'H', style: TextStyle(color: Colors.white)),
                               ],
                             ),
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Tagline
                         const Center(
                           child: Text(
                             'STYLE WITHOUT LIMITS',
@@ -171,13 +168,9 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                         const SizedBox(height: 28),
-                        // Badge New Collection
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 7,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.white24),
                               borderRadius: BorderRadius.circular(20),
@@ -185,11 +178,7 @@ class _SplashScreenState extends State<SplashScreen>
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.star,
-                                  color: AppColors.blue,
-                                  size: 10,
-                                ),
+                                Icon(Icons.star, color: AppColors.blue, size: 10),
                                 SizedBox(width: 6),
                                 Text(
                                   'NEW COLLECTION 2026',
@@ -208,22 +197,45 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const Spacer(),
 
-                  // ── BAWAH: Loading bar & teks ──
+                  // ── LOADING BAR ANIMASI ──
                   Padding(
                     padding: EdgeInsets.only(
                       bottom: MediaQuery.of(context).padding.bottom + 40,
                     ),
                     child: Column(
                       children: [
-                        // Gradient loading bar
-                        Container(
+                        // Background bar (abu-abu) + bar berjalan (biru-hijau)
+                        SizedBox(
                           width: 90,
                           height: 3,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [AppColors.blue, AppColors.green],
-                            ),
-                            borderRadius: BorderRadius.circular(3),
+                          child: AnimatedBuilder(
+                            animation: _loadingAnim,
+                            builder: (context, _) {
+                              return Stack(
+                                children: [
+                                  // Background
+                                  Container(
+                                    width: 90,
+                                    height: 3,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white12,
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                  // Bar yang berjalan
+                                  Container(
+                                    width: 100 * _loadingAnim.value,
+                                    height: 3,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [AppColors.blue, AppColors.green],
+                                      ),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 14),

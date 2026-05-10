@@ -65,6 +65,7 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _isLoading = true);
     try {
       final result = await ApiService.getCart();
+      print('CART RESPONSE: $result'); // tambah ini
       if (result['status'] == true) {
         setState(() {
           _items = (result['items'] as List)

@@ -25,6 +25,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
     setState(() => _isLoading = true);
     try {
       final result = await ApiService.getWishlist();
+      print('WISHLIST RESPONSE: $result');
       if (result['status'] == true) {
         final rawItems = result['items'] as List? ?? [];
         setState(() {
