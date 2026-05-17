@@ -6,7 +6,7 @@ class ApiService {
   // Ganti dengan IP kamu saat test di HP fisik
   // Kalau pakai emulator Android: 10.0.2.2:8000
   // Kalau pakai HP fisik: IP komputer kamu, contoh: 192.168.1.5:8000
-  static const String baseUrl = 'http://192.168.1.7:8000/api';
+  static const String baseUrl = 'http://192.168.100.8:8000/api';
 
   // ── Simpan & ambil token ──────────────────────────
   static Future<void> saveToken(String token) async {
@@ -201,5 +201,22 @@ class ApiService {
       headers: {'Authorization': 'Bearer $token'},
     );
     return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    String? noTelepon,
+    String? alamat,
+  }) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/auth/profile/update'),
+      headers: await _authHeaders(),
+      body: jsonEncode({
+        'name': name,
+        'no_telepon': noTelepon ?? '',
+        'alamat': alamat ?? '',
+      }),
+    );
+    return jsonDecode(res.body);
   }
 }

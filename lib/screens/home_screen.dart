@@ -27,17 +27,17 @@ class Product {
     this.isWishlisted = false,
   });
 
-factory Product.fromJson(Map<String, dynamic> json) {
-  return Product(
-    id: json['id'],
-    name: json['name'],
-    harga: double.parse(json['harga'].toString()),
-    kategori: json['kategori'],
-    gambar: json['gambar'], 
-    deskripsi: json['deskripsi'],
-    stok: json['stok'] ?? 0,
-  );
-}
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      harga: double.parse(json['harga'].toString()),
+      kategori: json['kategori'],
+      gambar: json['gambar'],
+      deskripsi: json['deskripsi'],
+      stok: json['stok'] ?? 0,
+    );
+  }
 }
 
 // =============================================================
@@ -56,7 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   List<Product> _products = [];
 
-  final List<String> _categories = ['Semua', 'T-Shirt', 'Jacket', 'Pants', 'hilal'];
+  final List<String> _categories = [
+    'Semua',
+    'T-Shirt',
+    'Jacket',
+    'Pants',
+    'hilal',
+  ];
 
   @override
   void initState() {
@@ -75,6 +81,213 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _showSizeBottomSheet(BuildContext context, Product product) {
+    String selectedSize = 'M';
+    int quantity = 1;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF12122E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Nama produk
+              Text(
+                product.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Rp ${product.harga.toInt() ~/ 1000}k',
+                style: const TextStyle(color: AppColors.blue, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+
+              // Pilih ukuran
+              const Text(
+                'Pilih Ukuran',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: ['S', 'M', 'L', 'XL', 'XXL'].map((size) {
+                  final isSelected = selectedSize == size;
+                  return GestureDetector(
+                    onTap: () => setModalState(() => selectedSize = size),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.only(right: 8),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.blue
+                            : const Color(0xFF1a1a3e),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? AppColors.blue : Colors.white24,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          size,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white60,
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+
+              // Pilih jumlah
+              const Text(
+                'Jumlah',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (quantity > 1) {
+                        setModalState(() => quantity--);
+                      }
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1a1a3e),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Icon(
+                        Icons.remove,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 50,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$quantity',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => setModalState(() => quantity++),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.blue,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Tombol tambah ke cart
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final result = await ApiService.addToCart(
+                      product.id,
+                      selectedSize,
+                      quantity,
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            result['message'] ?? 'Ditambahkan ke keranjang',
+                          ),
+                          backgroundColor: result['status'] == true
+                              ? AppColors.blue
+                              : Colors.red,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Tambah ke Keranjang',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   List<Product> get _filteredProducts {
@@ -165,7 +378,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(context, '/chatbot');
               }),
               const SizedBox(width: 8),
-              _iconButton(Icons.notifications_none, () {}),
             ],
           ),
         ],
@@ -234,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, '/search'),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -493,26 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   // Tombol tambah cart
                   GestureDetector(
-                    onTap: () async {
-                      final result = await ApiService.addToCart(
-                        product.id,
-                        'M', // default ukuran, nanti user pilih di halaman detail
-                        1,
-                      );
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              result['message'] ?? 'Ditambahkan ke keranjang',
-                            ),
-                            backgroundColor: result['status'] == true
-                                ? AppColors.blue
-                                : Colors.red,
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      }
-                    },
+                    onTap: () => _showSizeBottomSheet(context, product),
                     child: Container(
                       width: 28,
                       height: 28,

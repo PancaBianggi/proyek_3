@@ -80,7 +80,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         setState(() {
           _namaController.text = user['name'] ?? '';
           _emailController.text = user['email'] ?? '';
+          _teleponController.text      = user['no_telepon'] ?? '';
           _namaPenerimaController.text = user['name'] ?? '';
+          _alamatController.text       = user['alamat']     ?? '';
         });
       }
     } catch (e) {

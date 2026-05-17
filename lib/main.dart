@@ -13,6 +13,8 @@ import 'screens/wishlist_screen.dart';
 import 'screens/chatbot_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/order_detail_screen.dart';
+import 'screens/edit_profile_screen.dart';
+import 'utils/page_transition.dart';
 
 void main() {
   runApp(const VHGHApp());
@@ -31,21 +33,63 @@ class VHGHApp extends StatelessWidget {
         fontFamily: 'Montserrat',
       ),
       initialRoute: '/',
-      routes: {
-        '/':         (context) => const SplashScreen(),
-        '/auth':     (context) => const AuthChoiceScreen(),
-        '/login':    (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/home':     (context) => const HomeScreen(),
-        '/cart':     (context) => const CartScreen(),
-        '/checkout':      (context) => const CheckoutScreen(),
-        '/order-success': (context) => const OrderSuccessScreen(),
-        '/orders':        (context) => const OrdersScreen(),
-        '/profile':       (context) => const ProfileScreen(),
-        '/wishlist':      (context) => const WishlistScreen(),
-        '/chatbot':       (context) => const ChatbotScreen(),
-        '/search':        (context) => const SearchScreen(),
-        '/order-detail':  (context) => const OrderDetailScreen(),
+      onGenerateRoute: (settings) {
+        Widget page;
+
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(
+                builder: (_) => const SplashScreen());
+          case '/auth':
+            page = const AuthChoiceScreen();
+            break;
+          case '/login':
+            page = const LoginScreen();
+            break;
+          case '/register':
+            page = const RegisterScreen();
+            break;
+          case '/home':
+            page = const HomeScreen();
+            break;
+          case '/search':
+            page = const SearchScreen();
+            break;
+          case '/cart':
+            page = const CartScreen();
+            break;
+          case '/checkout':
+            page = const CheckoutScreen();
+            break;
+          case '/order-success':
+            page = const OrderSuccessScreen();
+            break;
+          case '/orders':
+            page = const OrdersScreen();
+            break;
+          case '/order-detail':
+            page = OrderDetailScreen();
+            break;
+          case '/profile':
+            page = const ProfileScreen();
+            break;
+          case '/edit-profile':
+            page = const EditProfileScreen();
+            break;
+          case '/wishlist':
+            page = const WishlistScreen();
+            break;
+          case '/chatbot':
+            // Chatbot dari bawah (bottom sheet feel)
+            return SlideTransitionPage(
+              page: const ChatbotScreen(),
+              direction: SlideDirection.fromBottom,
+            );
+          default:
+            page = const HomeScreen();
+        }
+
+        return SlideTransitionPage(page: page);
       },
     );
   }

@@ -10,13 +10,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _name    = '';
-  String _email   = '';
+  String _name = '';
+  String _email = '';
+  String _telepon = '';
+  String _alamat = '';
   bool _isLoading = true;
 
-  int _packed   = 0;
+  int _packed = 0;
   int _delivery = 0;
-  int _selesai  = 0;
+  int _selesai = 0;
 
   @override
   void initState() {
@@ -31,8 +33,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (result['status'] == true) {
         final user = result['user'];
         setState(() {
-          _name      = user['name']  ?? '';
-          _email     = user['email'] ?? '';
+          _name = user['name'] ?? '';
+          _email = user['email'] ?? '';
+          _telepon = user['no_telepon'] ?? '';
+          _alamat = user['alamat'] ?? '';
           _isLoading = false;
         });
       }
@@ -47,12 +51,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (result['status'] == true) {
         final orders = result['orders'] as List? ?? [];
         setState(() {
-          _packed   = orders.where((o) =>
-              o['status'] == 'processing' || o['status'] == 'paid').length;
-          _delivery = orders.where((o) =>
-              o['status'] == 'shipped').length;
-          _selesai  = orders.where((o) =>
-              o['status'] == 'delivered').length;
+          _packed = orders
+              .where(
+                (o) => o['status'] == 'processing' || o['status'] == 'paid',
+              )
+              .length;
+          _delivery = orders.where((o) => o['status'] == 'shipped').length;
+          _selesai = orders.where((o) => o['status'] == 'delivered').length;
         });
       }
     } catch (e) {
@@ -65,22 +70,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF12122E),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout',
-            style: TextStyle(color: Colors.white)),
-        content: const Text('Apakah kamu yakin ingin keluar?',
-            style: TextStyle(color: Colors.white70)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Logout', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Apakah kamu yakin ingin keluar?',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal',
-                style: TextStyle(color: Colors.white54)),
+            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Logout',
-                style: TextStyle(color: Colors.red)),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -94,8 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       await ApiService.removeToken();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/auth', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
       }
     }
   }
@@ -106,7 +108,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.bgDark,
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.blue))
+              child: CircularProgressIndicator(color: AppColors.blue),
+            )
           : SingleChildScrollView(
               child: Column(
                 children: [
@@ -120,6 +123,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
       bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildInfoTile(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.blue, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white54, fontSize: 11),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -145,53 +174,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const Spacer(),
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.blue,
-                    borderRadius: BorderRadius.circular(12),
+                GestureDetector(
+                  onTap: () async {
+                    final updated = await Navigator.pushNamed(
+                      context,
+                      '/edit-profile',
+                    );
+                    if (updated == true) {
+                      _loadProfile();
+                    }
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.blue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
-                  child: const Icon(Icons.settings_outlined,
-                      color: Colors.white, size: 20),
                 ),
               ],
             ),
             const SizedBox(height: 28),
 
             // Avatar + nama + email
-            Row(
+            // Avatar + nama + email + detail
+            Column(
               children: [
-                // Avatar
-                Container(
-                  width: 70, height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey.shade500,
-                    border: Border.all(color: Colors.white24, width: 2),
-                  ),
-                  child: const Icon(Icons.person,
-                      color: Colors.white70, size: 36),
-                ),
-                const SizedBox(width: 16),
-
-                // Nama & email
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _name.isNotEmpty ? _name : 'Pengguna VHGH',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey.shade500,
+                        border: Border.all(color: Colors.white24, width: 2),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _email,
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 13),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white70,
+                        size: 36,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Nama & email
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _name.isNotEmpty ? _name : 'Pengguna VHGH',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _email,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Info detail profil
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF12122E),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInfoTile(
+                        Icons.phone_outlined,
+                        'Nomor Telepon',
+                        _telepon.isNotEmpty ? _telepon : 'Belum diisi',
+                      ),
+                      const Divider(color: Colors.white10, height: 20),
+                      _buildInfoTile(
+                        Icons.location_on_outlined,
+                        'Alamat',
+                        _alamat.isNotEmpty ? _alamat : 'Belum diisi',
                       ),
                     ],
                   ),
@@ -234,13 +316,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildOrderStat(
-                      Icons.inventory_2_outlined, 'Packed', _packed),
+                    Icons.inventory_2_outlined,
+                    'Packed',
+                    _packed,
+                  ),
                   Container(width: 1, height: 50, color: Colors.white24),
                   _buildOrderStat(
-                      Icons.local_shipping_outlined, 'Delivery', _delivery),
+                    Icons.local_shipping_outlined,
+                    'Delivery',
+                    _delivery,
+                  ),
                   Container(width: 1, height: 50, color: Colors.white24),
                   _buildOrderStat(
-                      Icons.star_border_rounded, 'Rating', _selesai),
+                    Icons.star_border_rounded,
+                    'Rating',
+                    _selesai,
+                  ),
                 ],
               ),
             ),
@@ -264,9 +355,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         Icon(icon, color: Colors.white, size: 26),
         const SizedBox(height: 6),
-        Text(label,
-            style: const TextStyle(
-                color: Colors.white70, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
       ],
     );
   }
@@ -315,8 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           GestureDetector(
             onTap: _handleLogout,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.red.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(14),
@@ -325,13 +416,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 36, height: 36,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.logout,
-                        color: Colors.red, size: 20),
+                    child: const Icon(
+                      Icons.logout,
+                      color: Colors.red,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
@@ -344,8 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.arrow_forward,
-                      color: Colors.red, size: 18),
+                  const Icon(Icons.arrow_forward, color: Colors.red, size: 18),
                 ],
               ),
             ),
@@ -363,8 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.blue,
           borderRadius: BorderRadius.circular(14),
@@ -372,7 +465,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
@@ -390,8 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward,
-                color: Colors.white, size: 18),
+            const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
           ],
         ),
       ),
@@ -403,11 +496,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // -----------------------------------------------------------
   Widget _buildBottomNavBar() {
     final items = [
-      {'icon': Icons.home_rounded,           'label': 'Home',    'route': '/home'},
-      {'icon': Icons.search,                 'label': 'Search',  'route': '/search'},
-      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart',    'route': '/cart'},
-      {'icon': Icons.favorite_border,        'label': 'Wishlist','route': '/wishlist'},
-      {'icon': Icons.person_outline,         'label': 'Profile', 'route': ''},
+      {'icon': Icons.home_rounded, 'label': 'Home', 'route': '/home'},
+      {'icon': Icons.search, 'label': 'Search', 'route': '/search'},
+      {'icon': Icons.shopping_cart_outlined, 'label': 'Cart', 'route': '/cart'},
+      {
+        'icon': Icons.favorite_border,
+        'label': 'Wishlist',
+        'route': '/wishlist',
+      },
+      {'icon': Icons.person_outline, 'label': 'Profile', 'route': ''},
     ];
 
     return Container(
